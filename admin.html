@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>团委MBTI测试 · 数据管理后台</title>
+<style>
+  :root {
+    --text: #1e1e2e; --text-light: #6c7080;
+    --shadow: 0 8px 35px rgba(0,0,0,0.1);
+    --radius: 20px; --radius-sm: 12px;
+    --transition: 0.3s cubic-bezier(0.4,0,0.2,1);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: linear-gradient(135deg, #0c0c1d 0%, #1a1a3e 40%, #16213e 100%);
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* === PIN 弹窗 === */
+  .pin-overlay {
+    position:fixed; top:0; left:0;
+    width:100%; height:100%;
+    background:rgba(0,0,0,0.8);
+    z-index:100; display:flex;
+    justify-content:center; align-items:center;
+    padding:20px; backdrop-filter:blur(6px);
+  }
+  .pin-card {
+    background:white; border-radius:var(--radius);
+    width:100%; max-width:380px;
+    padding:clamp(24px,4vw,36px);
+    text-align:center;
+    box-shadow:0 20px 60px rgba(0,0,0,0.3);
+    animation:fadeIn 0.4s ease-out;
+  }
+  @keyframes fadeIn {
+    from { opacity:0; transform:translateY(20px) scale(0.96); }
+    to { opacity:1; transform:translateY(0) scale(1); }
+  }
+  .pin-icon { font-size:44px; margin-bottom:12px; }
+  .pin-card h3 { font-size:18px; font-weight:800; color:var(--text); margin-bottom:6px; }
+  .pin-card .sub { font-size:13px; color:var(--text-light); margin-bottom:18px; }
+  .pin-inputs { display:flex; justify-content:center; gap:10px; margin-bottom:4px; }
+  .pin-digit {
+    width:48px; height:56px;
+    border:2px solid #e5e7ed; border-radius:var(--radius-sm);
+    text-align:center;
+    font-size:22px; font-weight:700; color:var(--text);
+    background:#f9fafc; outline:none;
+    transition:all var(--transition);
+  }
+  .pin-digit:focus {
+    border-color:#667eea; background:#fff;
+    box-shadow:0 0 0 4px rgba(102,126,234,0.08);
+  }
+  .pin-digit.filled { border-color:#667eea; background:#f0f2ff; }
+  .pin-error {
+    display:none; color:#FF6B6B; font-size:12px; margin-top:8px;
+  }
+  .pin-actions { display:flex; gap:10px; margin-top:18px; }
+  .pin-actions button { flex:1; }
+  .pin-hint {
+    font-size:11px; color:#bcc0c8; margin-top:14px; cursor:pointer;
+  }
+  .pin-reset-msg {
+    font-size:10px; color:#ccc; margin-top:4px; display:none;
+  }
+
+  /* === 按钮 === */
+  .btn {
+    padding:13px 28px; border-radius:50px;
+    font-size:14px; font-weight:700;
+    border:none; cursor:pointer;
+    transition:all var(--transition);
+    font-family:inherit; letter-spacing:0.5px;
+  }
+  .btn-primary {
+    background:linear-gradient(135deg, #667eea, #764ba2);
+    color:white; box-shadow:0 6px 20px rgba(102,126,234,0.3);
+  }
+  .btn-primary:hover { box-shadow:0 10px 28px rgba(102,126,234,0.45); }
+  .btn-ghost {
+    background:#f0f2ff; color:#667eea;
+    border:2px solid #d8dbff;
+  }
+  .btn-danger { background:#FF6B6B; color:white; }
+  .btn-success { background:#38B000; color:white; }
+  .btn-sm { font-size:12px; padding:7px 16px; border-radius:16px; font-weight:600; }
+
+  /* === 数据看板（初始隐藏） === */
+  .dashboard {
+    display:none;
+    width:100%; max-width:95vw;
+    padding:20px;
+  }
+  .dashboard.show { display:block; }
+  .dashboard-card {
+    background:white; border-radius:var(--radius);
+    padding:clamp(18px,3vw,28px);
+    box-shadow:var(--shadow);
+    overflow:hidden;
+  }
+  .dashboard-header {
+    display:flex; justify-content:space-between; align-items:center;
+    flex-wrap:wrap; gap:10px; margin-bottom:14px;
+  }
+  .dashboard-header h2 { font-size:clamp(16px,2.5vw,20px); color:var(--text); }
+  .dashboard-header .count { font-size:13px; color:var(--text-light); }
+  .dashboard-actions { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
+  .table-wrap { overflow-x:auto; max-height:65vh; overflow-y:auto; }
+  table { width:100%; border-collapse:collapse; font-size:12px; min-width:900px; }
+  th {
+    background:#f8f9fc; padding:8px 6px; text-align:left;
+    font-weight:600; position:sticky; top:0;
+    border-bottom:2px solid #e8ecf1; white-space:nowrap; z-index:1;
+  }
+  td {
+    padding:5px 6px; border-bottom:1px solid #f2f2f5;
+    max-width:100px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .empty-state {
+    text-align:center; color:var(--text-light);
+    padding:clamp(30px,5vw,48px); font-size:14px;
+  }
+
+  /* === Toast === */
+  .toast {
+    position:fixed; top:18px; left:50%; transform:translateX(-50%);
+    background:#1e1e2e; color:white;
+    padding:10px 22px; border-radius:28px;
+    font-size:13px; font-weight:600;
+    z-index:200; opacity:0; transition:opacity 0.3s;
+    pointer-events:none; box-shadow:0 6px 20px rgba(0,0,0,0.35);
+  }
+  .toast.show { opacity:1; }
+
+  @media (max-width: 768px) {
+    .dashboard { padding:10px; }
+    table { font-size:11px; min-width:700px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- PIN 弹窗 -->
+<div class="pin-overlay" id="pinOverlay">
+  <div class="pin-card">
+    <div class="pin-icon">&#128274;</div>
+    <h3 id="pinTitle">管理后台验证</h3>
+    <p class="sub" id="pinSubtitle">请输入管理密码以查看数据</p>
+    <div class="pin-inputs">
+      <input type="password" maxlength="1" class="pin-digit" inputmode="numeric" pattern="[0-9]" oninput="onPinInput(this)" onkeydown="onPinKeydown(event,this)">
+      <input type="password" maxlength="1" class="pin-digit" inputmode="numeric" pattern="[0-9]" oninput="onPinInput(this)" onkeydown="onPinKeydown(event,this)">
+      <input type="password" maxlength="1" class="pin-digit" inputmode="numeric" pattern="[0-9]" oninput="onPinInput(this)" onkeydown="onPinKeydown(event,this)">
+      <input type="password" maxlength="1" class="pin-digit" inputmode="numeric" pattern="[0-9]" oninput="onPinInput(this)" onkeydown="onPinKeydown(event,this)">
+    </div>
+    <p class="pin-error" id="pinError"></p>
+    <div class="pin-actions">
+      <button class="btn btn-ghost" id="pinCancelBtn" onclick="cancelPin()" style="display:none;">取消</button>
+      <button class="btn btn-primary" id="pinConfirmBtn" onclick="verifyPin()">确认</button>
+    </div>
+    <p class="pin-hint" id="pinHint" onclick="resetPin()">忘记密码？</p>
+    <p class="pin-reset-msg" id="pinResetMsg">清除浏览器数据或联系开发者重置</p>
+  </div>
+</div>
+
+<!-- 数据看板 -->
+<div class="dashboard" id="dashboard">
+  <div class="dashboard-card">
+    <div class="dashboard-header">
+      <div>
+        <h2>&#128203; 团委MBTI测试数据看板</h2>
+        <div class="count" id="recordCount">共 0 条记录</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="location.reload()">&#128274; 锁定</button>
+    </div>
+    <div class="dashboard-actions">
+      <button class="btn btn-success btn-sm" onclick="exportCSV()">&#128229; 导出CSV</button>
+      <button class="btn btn-primary btn-sm" onclick="exportJSON()">&#128203; 复制JSON</button>
+      <button class="btn btn-danger btn-sm" onclick="clearData()">&#128465; 清空数据</button>
+    </div>
+    <div class="table-wrap">
+      <table id="dataTable">
+        <thead><tr>
+          <th>#</th><th>姓名</th><th>性别</th><th>学院</th><th>专业</th>
+          <th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th><th>Q5</th><th>Q6</th>
+          <th>Q7</th><th>Q8</th><th>Q9</th><th>Q10</th><th>Q11</th><th>Q12</th>
+          <th>Q13</th><th>Q14</th><th>Q15</th><th>Q16</th><th>Q17</th><th>Q18</th>
+          <th>人格类型</th><th>三级推荐</th><th>时间</th>
+        </tr></thead>
+        <tbody id="dataTbody"></tbody>
+      </table>
+      <div class="empty-state" id="emptyState">暂无数据，测试数据会通过网络同步至此</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==================== 题目配置（与主文件同步 · 18题 · 4选项） ====================
+const questions = [
+  { title:'团委大型迎新晚会后去聚餐？', options:[{text:'一起继续嗨(A)'},{text:'婉拒回宿舍(I)'},{text:'活跃气氛(E)'},{text:'跟着但不参与(I)'}] },
+  { title:'课堂即兴发言无准备？', options:[{text:'边讲边想(E)'},{text:'希望再准备(I)'},{text:'互动争取时间(E)'},{text:'列要点冷静陈述(I)'}] },
+  { title:'独自学习一下午感觉？', options:[{text:'想约人聊天(E)'},{text:'沉浸很满足(I)'},{text:'去逛逛找人(E)'},{text:'还能再学(I)'}] },
+  { title:'通识课自我介绍？', options:[{text:'大方加幽默(E)'},{text:'简短说完(I)'},{text:'自然互动(E)'},{text:'按计划快速(I)'}] },
+  { title:'群里讨论团建？', options:[{text:'立刻加入(E)'},{text:'看完再说(I)'},{text:'主动张罗(E)'},{text:'希望安静聚(I)'}] },
+  { title:'提交文化节策划方案？', options:[{text:'宏大主题(N)'},{text:'参考去年(S)'},{text:'思维导图(N)'},{text:'物资清单(S)'}] },
+  { title:'朋友说学设计？', options:[{text:'AI改变设计(N)'},{text:'用什么软件(S)'},{text:'设计本质(N)'},{text:'课表课程(S)'}] },
+  { title:'讲座讲抽象理论？', options:[{text:'启发联想(N)'},{text:'望多案例(S)'},{text:'讨论意义(N)'},{text:'记关键点查操作(S)'}] },
+  { title:'电影开放式结局？', options:[{text:'讨论解读(N)'},{text:'要有明确结局(S)'},{text:'搜影评(N)'},{text:'关心画面音乐(S)'}] },
+  { title:'朋友比赛失利？', options:[{text:'分析改进(T)'},{text:'拥抱安慰(F)'},{text:'复盘扣分点(T)'},{text:'陪散步安慰(F)'}] },
+  { title:'小组讨论吵架？', options:[{text:'客观标准(T)'},{text:'暂停平复(F)'},{text:'指出逻辑漏洞(T)'},{text:'安抚情绪(F)'}] },
+  { title:'奖学金二选一？', options:[{text:'对比硬指标(T)'},{text:'给更需要者(F)'},{text:'权重评分(T)'},{text:'看人品口碑(F)'}] },
+  { title:'项目被评委批评？', options:[{text:'冷静搞清问题(T)'},{text:'心情跌谷底(F)'},{text:'逐条优化(T)'},{text:'找朋友倾诉(F)'}] },
+  { title:'室友吐槽另一室友？', options:[{text:'梳理矛盾解决(T)'},{text:'共情安慰(F)'},{text:'分析沟通切入点(T)'},{text:'换环境散心(F)'}] },
+  { title:'期末复习六门课？', options:[{text:'制定计划(J)'},{text:'冲刺效率(P)'},{text:'确保核心(J)'},{text:'灵活安排(P)'}] },
+  { title:'负责新人见面会？', options:[{text:'全面清单(J)'},{text:'先问大家(P)'},{text:'精确流程(J)'},{text:'边走边调(P)'}] },
+  { title:'周末无安排醒来？', options:[{text:'清掉旧任务(J)'},{text:'躺到几点算几点(P)'},{text:'列待办清单(J)'},{text:'先刷手机再决定(P)'}] },
+  { title:'电脑桌面文件夹？', options:[{text:'分类清晰(J)'},{text:'随意搜索(P)'},{text:'定期整理(J)'},{text:'独特逻辑(P)'}] }
+];
+
+// ==================== 工具函数 ====================
+function h(s) { if(!s)return''; const d=document.createElement('div');d.textContent=s;return d.innerHTML; }
+
+function showToast(m) {
+  const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');
+  clearTimeout(t._tid);t._tid=setTimeout(()=>t.classList.remove('show'),2000);
+}
+
+function hashPin(pin) { return btoa(pin + '_tuanwei_salt_2025').substring(0,16); }
+function hasPinSet() { return !!localStorage.getItem('tuanwei_admin_pin'); }
+
+// ==================== PIN 逻辑 ====================
+function onPinInput(el) {
+  el.value = el.value.replace(/[^0-9]/g, '').slice(0,1);
+  if (el.value) { el.classList.add('filled'); } else { el.classList.remove('filled'); }
+  if (el.value && el.nextElementSibling) el.nextElementSibling.focus();
+}
+
+function onPinKeydown(e, el) {
+  if (e.key === 'Backspace' && !el.value && el.previousElementSibling) {
+    el.previousElementSibling.focus();
+    el.previousElementSibling.classList.remove('filled');
+  }
+}
+
+function readPinInput() {
+  const inputs = document.querySelectorAll('.pin-digit');
+  let pin = '';
+  inputs.forEach(inp => pin += inp.value);
+  return pin;
+}
+
+function cancelPin() {
+  if (hasPinSet()) {
+    // 已设置密码但想取消 → 刷新页面回到输入状态
+    location.reload();
+  }
+}
+
+function setPin() {
+  const pin = readPinInput();
+  const error = document.getElementById('pinError');
+  if (pin.length !== 4) { error.textContent='请输入完整的 4 位密码'; error.style.display='block'; return; }
+  localStorage.setItem('tuanwei_admin_pin', hashPin(pin));
+  error.style.display='none';
+  showToast('管理密码已设置！');
+  unlockDashboard();
+}
+
+function verifyPin() {
+  const pin = readPinInput();
+  const error = document.getElementById('pinError');
+  if (pin.length !== 4) { error.textContent='请输入完整的 4 位密码'; error.style.display='block'; return; }
+  if (hasPinSet()) {
+    // 已有密码 → 验证
+    const stored = localStorage.getItem('tuanwei_admin_pin');
+    if (hashPin(pin) === stored) {
+      error.style.display='none';
+      unlockDashboard();
+    } else {
+      error.textContent='密码错误，请重试';
+      error.style.display='block';
+      document.querySelectorAll('.pin-digit').forEach(inp => { inp.value=''; inp.classList.remove('filled'); });
+      setTimeout(()=>{ const f=document.querySelector('.pin-digit'); if(f)f.focus(); },100);
+    }
+  } else {
+    // 首次 → 设置密码
+    setPin();
+  }
+}
+
+function resetPin() {
+  const resetMsg = document.getElementById('pinResetMsg');
+  if (resetMsg.style.display === 'none') {
+    resetMsg.style.display = 'block';
+  } else {
+    if (confirm('确定要重置密码吗？所有已保存的测试数据不会被删除。')) {
+      localStorage.removeItem('tuanwei_admin_pin');
+      showToast('密码已重置');
+      location.reload();
+    }
+  }
+}
+
+function unlockDashboard() {
+  document.getElementById('pinOverlay').style.display = 'none';
+  document.getElementById('dashboard').classList.add('show');
+  loadDataTable();
+}
+
+// ==================== 数据渲染 ====================
+const API_PATH = '/api/records';
+
+function loadDataTable() {
+  fetchRemoteRecords().then(records => {
+    renderRecords(records);
+  }).catch(() => {
+    const records = loadLocalRecords();
+    renderRecords(records);
+  });
+}
+
+function renderRecords(records) {
+  document.getElementById('recordCount').textContent = '共 ' + records.length + ' 条记录';
+  const tbody = document.getElementById('dataTbody');
+  const emptyState = document.getElementById('emptyState');
+
+  if (!records.length) {
+    tbody.innerHTML = '';
+    emptyState.style.display = 'block';
+    return;
+  }
+
+  emptyState.style.display = 'none';
+  const letters = ['A','B','C','D'];
+  tbody.innerHTML = records.map((r,i) => `
+    <tr>
+      <td>${i+1}</td><td>${h(r.name)}</td><td>${h(r.gender)}</td><td>${h(r.college||'-')}</td><td>${h(r.major||'-')}</td>
+      ${(r.answers||[]).map((a,j)=>{
+        const q=questions[j];
+        return '<td title="'+(q?h(q.options[a]?.text||''):'')+'">'+(letters[a]||'-')+'</td>';
+      }).join('')}
+      ${Array(Math.max(0,18-(r.answers||[]).length)).fill('<td>-</td>').join('')}
+      <td><strong>${h(r.mbti||'-')}</strong></td><td>${h(r.recommend||'-')}</td>
+      <td style="font-size:10px;">${h(r.timestamp||'-')}</td>
+    </tr>
+  `).join('');
+}
+
+function loadLocalRecords() {
+  let records = [];
+  try { records = JSON.parse(localStorage.getItem('tuanwei_test_records')||'[]'); } catch(e){ records=[]; }
+  return records;
+}
+
+function fetchRemoteRecords() {
+  return fetch(API_PATH, { cache: 'no-store' }).then(res => {
+    if (!res.ok) throw new Error('Remote fetch failed');
+    return res.json();
+  });
+}
+
+// ==================== 数据导出 ====================
+function exportCSV() {
+  let records = loadLocalRecords();
+  try { records = JSON.parse(localStorage.getItem('tuanwei_test_records')||'[]'); } catch(e){ records = loadLocalRecords(); }
+  if(!records.length){showToast('暂无数据可导出');return;}
+  const letters=['A','B','C','D'];
+  let csv='\uFEFF序号,姓名,性别,学院,专业,'+questions.map((_,i)=>'Q'+(i+1)).join(',')+',人格类型,三级推荐,提交时间\n';
+  records.forEach((r,i)=>{
+    const row=[i+1,r.name,r.gender,r.college||'',r.major||'',
+      ...(r.answers||[]).map(a=>letters[a]||''),
+      ...Array(Math.max(0,18-(r.answers||[]).length)).fill(''),
+      r.mbti||'',r.recommend||'',r.timestamp||''];
+    csv+=row.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')+'\n';
+  });
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='团委MBTI数据_'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+  URL.revokeObjectURL(url);showToast('CSV导出成功！');
+}
+
+function exportJSON() {
+  let records = loadLocalRecords();
+  if(!records.length){showToast('暂无数据');return;}
+  const j=JSON.stringify(records,null,2);
+  if(navigator.clipboard){navigator.clipboard.writeText(j).then(()=>showToast('JSON已复制到剪贴板！')).catch(()=>dlJSON(j));}
+  else dlJSON(j);
+}
+function dlJSON(s){
+  const blob=new Blob([s],{type:'application/json;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='团委MBTI数据_'+new Date().toISOString().slice(0,10)+'.json';a.click();
+  URL.revokeObjectURL(url);
+}
+
+function clearData() {
+  if(!confirm('确定要清空所有测试数据吗？此操作不可恢复！'))return;
+  localStorage.removeItem('tuanwei_test_records');
+  fetch(API_PATH, { method:'DELETE' }).finally(() => loadDataTable());
+  showToast('数据已清空');
+}
+
+// ==================== 初始化 ====================
+(function init() {
+  if (hasPinSet()) {
+    // 已有密码 → 显示验证界面，隐藏"设置"相关UI
+    document.getElementById('pinTitle').textContent = '管理后台验证';
+    document.getElementById('pinSubtitle').textContent = '请输入 4 位管理密码';
+    document.getElementById('pinConfirmBtn').textContent = '确认';
+    document.getElementById('pinConfirmBtn').onclick = verifyPin;
+    document.getElementById('pinCancelBtn').style.display = 'block';
+    document.getElementById('pinHint').style.display = 'block';
+    setTimeout(()=>{ const f=document.querySelector('.pin-digit'); if(f)f.focus(); },300);
+  } else {
+    // 首次 → 设置密码
+    document.getElementById('pinTitle').textContent = '首次访问 · 设置管理密码';
+    document.getElementById('pinSubtitle').textContent = '请设置 4 位数字密码以保护数据安全';
+    document.getElementById('pinConfirmBtn').textContent = '设置密码';
+    document.getElementById('pinConfirmBtn').onclick = setPin;
+    document.getElementById('pinCancelBtn').style.display = 'none';
+    document.getElementById('pinHint').style.display = 'none';
+    setTimeout(()=>{ const f=document.querySelector('.pin-digit'); if(f)f.focus(); },300);
+  }
+
+  // 回车键提交
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && document.getElementById('pinOverlay').style.display !== 'none') {
+      const btn = document.getElementById('pinConfirmBtn');
+      if (btn && btn.onclick) btn.onclick();
+    }
+  });
+})();
+</script>
+</body>
+</html>

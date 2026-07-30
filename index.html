@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>团委MBTI测试网站</title>
+  <style>
+    :root { --bg:#0b1220; --card:#121a33; --text:#f3f6ff; --muted:#91a0c4; --accent:#7c5cff; --radius:24px; }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{min-height:100vh;background:linear-gradient(135deg,#0b1220 0%,#05101c 100%);color:var(--text);font-family:system-ui, sans-serif;display:flex;align-items:center;justify-content:center;padding:24px;}
+    .card{width:100%;max-width:520px;background:rgba(18,26,51,.92);border:1px solid rgba(255,255,255,.08);border-radius:var(--radius);padding:34px;box-shadow:0 24px 80px rgba(0,0,0,.25);}
+    h1{font-size:clamp(28px,5vw,36px);margin-bottom:16px;}
+    p{color:var(--muted);line-height:1.8;margin-bottom:24px;}
+    .links{display:grid;gap:14px;}
+    .link{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-radius:18px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);text-decoration:none;color:var(--text);transition:transform .25s ease,background .25s ease;}
+    .link:hover{transform:translateY(-2px);background:rgba(124,92,255,.12);}
+    .link span{font-weight:700;}
+    .footer{margin-top:28px;font-size:13px;color:var(--muted);line-height:1.7;}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>团委MBTI测试</h1>
+    <p>这是一个静态测试网站入口。点击下面链接，直接打开测试页面或管理后台查看答题记录。</p>
+    <div class="links">
+      <a class="link" href="tuanwei-mbti-test.html">📘 进入答题页面</a>
+      <a class="link" href="admin.html">🔐 进入后台管理</a>
+    </div>
+    <div class="footer">启动服务后，其他人在同一网络访问此设备地址即可提交数据。后台会从 `records.json` 同步读取。</div>
+  </div>
+</body>
+</html>
