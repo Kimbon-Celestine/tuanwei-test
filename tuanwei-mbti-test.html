@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>团委版MBTI人格鉴定 | 测测你的隐藏属性</title>
+<!--
+========================================
+ 🚀 公网部署方法（3选1，推荐方案A）：
+========================================
+
+  【方案A - GitHub Pages（免费，推荐）】
+  1. 注册 GitHub 账号：https://github.com
+  2. 新建仓库：Repository name 任意（如 tuanwei-test）
+  3. 上传本文件到仓库根目录，重命名为 index.html
+  4. Settings → Pages → Source 选 "main" 分支 → Save
+  5. 几分钟后访问：https://你的用户名.github.io/tuanwei-test
+  （之后每次更新文件，推送即可自动刷新）
+
+  【方案B - Vercel（免费，自动HTTPS）】
+  1. 注册 https://vercel.com（用 GitHub 登录）
+  2. Import 你的 GitHub 仓库
+  3. 自动部署，获得 https://xxx.vercel.app 链接
+
+  【方案C - Netlify（免费，拖拽即部署）】
+  1. 打开 https://app.netlify.com/drop
+  2. 把本文件直接拖入网页即可上线
+  3. 获得随机链接，可在设置中自定义域名
+========================================
+-->
+<style>
+  :root {
+    --office: #4A6741;   --office-light: #7BA669;
+    --org: #2C3E50;      --org-light: #4A6B8A;
+    --pub: #FF6B6B;      --pub-light: #FFB347;
+    --sport: #FF8E53;    --sport-light: #FFB347;
+    --sci: #00B4D8;      --sci-light: #48CAE4;
+    --practice: #38B000; --practice-light: #70E000;
+    --second: #9B59B6;   --second-light: #C39BD3;
+    --bg-start: #667eea; --bg-mid: #764ba2; --bg-end: #f093fb;
+    --card-bg: #ffffff;
+    --text: #1e1e2e;     --text-light: #6c7080;
+    --text-white: #ffffff;
+    --shadow-sm: 0 2px 12px rgba(0,0,0,0.06);
+    --shadow: 0 8px 35px rgba(0,0,0,0.10);
+    --shadow-lg: 0 16px 50px rgba(0,0,0,0.14);
+    --radius: 20px;      --radius-sm: 12px;
+    --transition: 0.3s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
+    background: #0b0b1e;
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    overflow-x: hidden;
+  }
+
+  /* === 星空 === */
+  .stars { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0; }
+  .star {
+    position:absolute; background:white; border-radius:50%;
+    animation: twinkle var(--dur) ease-in-out infinite;
+    animation-delay: var(--delay); opacity:0;
+  }
+  @keyframes twinkle {
+    0%,100% { opacity:0.15; transform:scale(1); }
+    50% { opacity:1; transform:scale(1.8); }
+  }
+
+  .container {
+    position:relative; z-index:1;
+    width:100%; max-width:680px;
+    min-height:100vh;
+    display:flex; flex-direction:column; justify-content:center;
+    padding: clamp(12px, 2vw, 28px);
+  }
+
+  /* === 页面卡片 === */
+  .page {
+    display:none;
+    background: var(--card-bg);
+    border-radius: clamp(16px, 3vw, var(--radius));
+    box-shadow: var(--shadow-lg);
+    overflow:hidden;
+    animation: fadeSlideIn 0.45s ease-out;
+    width:100%;
+  }
+  .page.active { display:block; }
+  @keyframes fadeSlideIn {
+    from { opacity:0; transform:translateY(28px) scale(0.97); }
+    to { opacity:1; transform:translateY(0) scale(1); }
+  }
+
+  /* ====== 封面 ====== */
+  .cover {
+    text-align:center;
+    padding: clamp(36px, 6vw, 56px) clamp(20px, 5vw, 40px);
+    background: linear-gradient(145deg, #667eea 0%, #764ba2 45%, #f093fb 100%);
+    color: white;
+    position:relative; overflow:hidden;
+  }
+  .cover::before {
+    content:''; position:absolute;
+    width:clamp(200px,40vw,360px); height:clamp(200px,40vw,360px);
+    border-radius:50%; background:rgba(255,255,255,0.07);
+    top:-80px; right:-80px;
+  }
+  .cover::after {
+    content:''; position:absolute;
+    width:clamp(140px,30vw,260px); height:clamp(140px,30vw,260px);
+    border-radius:50%; background:rgba(255,255,255,0.05);
+    bottom:-40px; left:-40px;
+  }
+  .cover .emoji-badge {
+    font-size:clamp(44px,8vw,64px);
+    margin-bottom:clamp(10px,2vw,18px);
+    animation:bounce 2s ease-in-out infinite;
+    position:relative; z-index:1;
+  }
+  @keyframes bounce {
+    0%,100%{transform:translateY(0);}
+    50%{transform:translateY(-10px);}
+  }
+  .cover h1 {
+    font-size:clamp(20px,4vw,28px);
+    font-weight:900; line-height:1.45;
+    margin-bottom:clamp(8px,1.5vw,14px);
+    position:relative; z-index:1;
+    text-shadow:0 2px 12px rgba(0,0,0,0.2);
+  }
+  .cover .subtitle {
+    font-size:clamp(13px,2vw,15px);
+    opacity:0.92; margin-bottom:clamp(20px,3vw,30px);
+    position:relative; z-index:1;
+  }
+  .cover .tag-row {
+    display:flex; justify-content:center; gap:8px; flex-wrap:wrap;
+    margin-bottom:clamp(24px,3vw,34px);
+    position:relative; z-index:1;
+  }
+  .cover .tag {
+    background:rgba(255,255,255,0.22); backdrop-filter:blur(12px);
+    padding:6px 16px; border-radius:24px;
+    font-size:clamp(11px,1.8vw,13px); font-weight:500;
+  }
+  .cover .meeting-info {
+    background:rgba(255,255,255,0.15); backdrop-filter:blur(12px);
+    border-radius:14px; padding:clamp(12px,2vw,16px);
+    margin:0 auto clamp(16px,2vw,20px);
+    max-width:340px; position:relative; z-index:1;
+    font-size:clamp(11px,1.6vw,12px); line-height:1.6;
+    border:1px solid rgba(255,255,255,0.18);
+  }
+  .cover .meeting-info strong { font-size:clamp(13px,2vw,15px); }
+
+  /* ====== 按钮 ====== */
+  .btn {
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;
+    padding:clamp(12px,2vw,15px) clamp(24px,4vw,44px);
+    border-radius:50px;
+    font-size:clamp(14px,2.2vw,16px); font-weight:700;
+    border:none; cursor:pointer;
+    transition:all var(--transition);
+    text-decoration:none; letter-spacing:0.5px;
+    font-family:inherit;
+    position:relative; overflow:hidden;
+  }
+  .btn:active { transform:scale(0.965); }
+  .btn-start {
+    background:white; color:#764ba2;
+    font-size:clamp(15px,2.5vw,18px);
+    padding:clamp(14px,2.5vw,18px) clamp(36px,6vw,54px);
+    box-shadow:0 10px 35px rgba(0,0,0,0.18);
+    position:relative; z-index:1;
+  }
+  .btn-start:hover { transform:translateY(-2px); box-shadow:0 14px 40px rgba(0,0,0,0.24); }
+  .btn-next {
+    width:100%;
+    background:linear-gradient(135deg, #667eea, #764ba2);
+    color:white; padding:clamp(13px,2vw,15px);
+    font-size:clamp(14px,2vw,15px);
+    box-shadow:0 6px 20px rgba(102,126,234,0.3);
+  }
+  .btn-next:disabled { opacity:0.45; cursor:not-allowed; box-shadow:none; }
+  .btn-next:not(:disabled):hover { box-shadow:0 10px 28px rgba(102,126,234,0.45); transform:translateY(-1px); }
+  .btn-glass {
+    background:rgba(255,255,255,0.16); backdrop-filter:blur(10px);
+    color:white; border:1px solid rgba(255,255,255,0.3);
+    font-size:clamp(11px,1.6vw,13px);
+    padding:8px 20px;
+  }
+
+  /* ====== 信息表单 ====== */
+  .form-section {
+    padding:clamp(24px,4vw,36px) clamp(18px,3vw,28px);
+  }
+  .form-section .section-header {
+    text-align:center; margin-bottom:clamp(18px,3vw,28px);
+  }
+  .form-section .section-header .step-badge {
+    display:inline-block;
+    background:linear-gradient(135deg, #667eea, #764ba2);
+    color:white; padding:4px 14px; border-radius:24px;
+    font-size:clamp(11px,1.6vw,12px); font-weight:600;
+    margin-bottom:8px;
+  }
+  .form-section .section-header h2 {
+    font-size:clamp(18px,3vw,22px);
+    color:var(--text); font-weight:800;
+  }
+  .form-group {
+    margin-bottom:clamp(12px,2vw,16px);
+  }
+  .form-group label {
+    display:block;
+    font-size:clamp(12px,1.8vw,13px);
+    font-weight:600; color:var(--text-light);
+    margin-bottom:5px; letter-spacing:0.3px;
+  }
+  .form-group input[type="text"],
+  .form-group select {
+    width:100%;
+    padding:clamp(10px,1.8vw,13px) 16px;
+    border:2px solid #e5e7ed; border-radius:var(--radius-sm);
+    font-size:clamp(14px,2vw,15px); color:var(--text);
+    background:#f9fafc;
+    font-family:inherit; outline:none;
+    transition:all var(--transition);
+  }
+  .form-group select {
+    padding-right:40px;
+    background:#f9fafc url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'%3E%3Cpath d='M1 1l6 6 6-6' stroke='%236c7080' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 14px center;
+    appearance:none; cursor:pointer;
+  }
+  .form-group input[type="text"]:focus,
+  .form-group select:focus {
+    border-color:#667eea; background-color:#fff;
+    box-shadow:0 0 0 4px rgba(102,126,234,0.07);
+  }
+  .form-group select:disabled { opacity:0.5; cursor:not-allowed; background:#eee; }
+  .form-group select option { padding:8px; }
+  .form-row {
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:clamp(10px,2vw,14px);
+  }
+  @media (min-width:600px) {
+    .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:clamp(12px,2vw,16px); }
+  }
+
+  /* ====== 答题区域 ====== */
+  .quiz-header {
+    background:linear-gradient(135deg, #667eea, #764ba2);
+    padding:clamp(16px,2.5vw,22px) clamp(18px,3vw,28px);
+    color:white;
+    display:flex; align-items:center; gap:14px;
+  }
+  .quiz-header .q-num {
+    font-size:clamp(32px,5vw,40px); font-weight:900; opacity:0.22;
+    min-width:44px; text-align:center;
+  }
+  .quiz-header .q-text { flex:1; }
+  .quiz-header .q-text h3 {
+    font-size:clamp(13px,2vw,15px); font-weight:600;
+  }
+  .progress-bar-wrap {
+    height:4px; background:rgba(255,255,255,0.2);
+    border-radius:2px; margin-top:6px; overflow:hidden;
+  }
+  .progress-bar-fill {
+    height:100%; background:white; border-radius:2px;
+    transition:width 0.45s ease;
+  }
+  .quiz-body {
+    padding:clamp(22px,3.5vw,32px) clamp(18px,3vw,28px);
+  }
+  .quiz-body .question-title {
+    font-size:clamp(16px,2.5vw,18px);
+    font-weight:700; color:var(--text);
+    margin-bottom:clamp(16px,2.5vw,22px);
+    line-height:1.55;
+  }
+  .option-list { display:flex; flex-direction:column; gap:clamp(8px,1.5vw,12px); }
+  .option-item {
+    display:flex; align-items:center;
+    padding:clamp(13px,2vw,16px);
+    border:2px solid #e8ecf1; border-radius:14px;
+    cursor:pointer; transition:all var(--transition);
+    background:#fafbfc; gap:12px;
+  }
+  .option-item:hover { border-color:#bcc3ff; background:#f5f6ff; }
+  .option-item.selected {
+    border-color:#667eea;
+    background:linear-gradient(135deg, #f1f2ff, #e8eaff);
+    box-shadow:0 4px 16px rgba(102,126,234,0.12);
+  }
+  .option-item .option-letter {
+    width:clamp(30px,5vw,34px); height:clamp(30px,5vw,34px);
+    border-radius:10px;
+    background:linear-gradient(135deg, #667eea, #764ba2);
+    color:white; display:flex; align-items:center; justify-content:center;
+    font-weight:700; font-size:clamp(13px,2vw,14px); flex-shrink:0;
+    transition:all var(--transition);
+  }
+  .option-item.selected .option-letter {
+    background:linear-gradient(135deg, #4e5fd4, #5c3b8e);
+    transform:scale(1.08);
+  }
+  .option-item .option-text {
+    font-size:clamp(13px,2vw,15px);
+    color:var(--text); line-height:1.45;
+  }
+
+  /* ====== 结果页 ====== */
+  .result-page {
+    text-align:center;
+    padding:clamp(24px,4vw,36px) clamp(16px,3vw,28px);
+  }
+  .result-mbti {
+    display:inline-block;
+    background:#f0f2ff; color:#667eea;
+    padding:8px 20px; border-radius:24px;
+    font-size:clamp(15px,2.5vw,18px); font-weight:800;
+    margin-bottom:6px;
+  }
+  .result-trait {
+    font-size:clamp(12px,1.8vw,14px);
+    color:var(--text-light); margin-bottom:clamp(14px,2vw,20px);
+  }
+
+  /* 醒目免责横幅 */
+  .disclaimer-banner {
+    background:linear-gradient(135deg, #FFF3CD, #FFE69C);
+    border:2px solid #FFC107;
+    border-radius:14px;
+    padding:clamp(12px,2vw,16px) clamp(14px,2vw,20px);
+    margin-bottom:clamp(16px,2.5vw,22px);
+    text-align:center;
+    font-size:clamp(12px,1.8vw,14px);
+    color:#856404;
+    line-height:1.6;
+    animation:pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%,100% { box-shadow:0 0 0 0 rgba(255,193,7,0.4); }
+    50% { box-shadow:0 0 0 8px rgba(255,193,7,0); }
+  }
+
+  /* 部门推荐卡片 */
+  .dept-card {
+    background:#fafbfd;
+    border-radius:14px;
+    padding:clamp(14px,2.5vw,20px);
+    margin-bottom:clamp(10px,1.8vw,14px);
+    text-align:left;
+    transition:all var(--transition);
+  }
+  .dept-card:hover { background:#f0f2ff; transform:translateX(4px); }
+  .dept-card-level {
+    font-size:clamp(12px,1.8vw,13px);
+    font-weight:700; color:var(--text-light);
+    margin-bottom:4px;
+  }
+  .dept-card-name {
+    font-size:clamp(16px,2.5vw,20px);
+    font-weight:800; margin-bottom:4px;
+  }
+  .dept-card-slogan {
+    font-size:clamp(11px,1.6vw,12px);
+    color:var(--text-light); font-style:italic;
+    margin-bottom:8px; opacity:0.8;
+  }
+  .dept-card-desc {
+    font-size:clamp(12px,1.8vw,14px);
+    color:var(--text); line-height:1.6;
+  }
+
+  .result-actions {
+    display:flex; flex-direction:column; gap:10px;
+    margin-top:clamp(14px,2vw,20px);
+  }
+  .btn-retry {
+    background:#f0f2ff; color:#667eea;
+    border:2px solid #d8dbff; width:100%;
+    padding:clamp(12px,2vw,14px);
+    font-size:clamp(13px,2vw,14px);
+  }
+  .btn-share {
+    width:100%;
+    background:linear-gradient(135deg, #667eea, #764ba2);
+    color:white; padding:clamp(12px,2vw,14px);
+    font-size:clamp(14px,2vw,15px);
+    box-shadow:0 6px 22px rgba(102,126,234,0.35);
+  }
+
+  /* ====== Toast ====== */
+  .toast {
+    position:fixed; top:18px; left:50%; transform:translateX(-50%);
+    background:#1e1e2e; color:white;
+    padding:10px 22px; border-radius:28px;
+    font-size:13px; font-weight:600;
+    z-index:200; opacity:0; transition:opacity var(--transition);
+    pointer-events:none; box-shadow:0 6px 20px rgba(0,0,0,0.35);
+  }
+  .toast.show { opacity:1; }
+
+  /* ====== PC 端优化 ====== */
+  @media (min-width: 768px) {
+    body { align-items:flex-start; padding-top:clamp(30px,5vh,60px); }
+    .container { padding:20px; }
+    .option-item { padding:16px 18px; }
+    .option-list { display:grid; grid-template-columns:1fr 1fr; gap:10px 12px; }
+    .result-actions { flex-direction:row; }
+    .result-actions .btn { flex:1; }
+  }
+
+  @media (min-width: 1024px) {
+    .container { max-width:720px; padding:32px; }
+    .cover { padding:56px 44px; }
+    .cover h1 { font-size:30px; }
+    .quiz-body { padding:32px 32px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- 星空 -->
+<div class="stars" id="stars"></div>
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- 主容器 -->
+<div class="container" id="app">
+
+  <!-- ===== 封面 ===== -->
+  <div class="page cover active" id="page-cover">
+    <div class="emoji-badge">🧬</div>
+    <h1>测测你的隐藏属性？<br>团委七大部门寻人启事！</h1>
+    <p class="subtitle">E人I人看过来！你的"团"系人格是哪一款？</p>
+    <div class="tag-row">
+      <span class="tag">🔍 人格鉴定</span>
+      <span class="tag">🎯 部门匹配</span>
+      <span class="tag">✨ 入职指南</span>
+    </div>
+    <button class="btn btn-start" onclick="goToPage('info')">🚀 开始测试</button>
+  </div>
+
+  <!-- ===== 信息表单 ===== -->
+  <div class="page" id="page-info">
+    <div class="form-section">
+      <div class="section-header">
+        <div class="step-badge">STEP 1</div>
+        <h2>📝 先留下你的足迹</h2>
+      </div>
+
+      <!-- 姓名 -->
+      <div class="form-group">
+        <label>⭐ 姓名</label>
+        <input type="text" id="inputName" placeholder="请输入你的姓名" maxlength="20">
+      </div>
+
+      <!-- 性别 -->
+      <div class="form-group">
+        <label>⭐ 性别</label>
+        <select id="inputGender">
+          <option value="">请选择性别</option>
+          <option value="男">男</option>
+          <option value="女">女</option>
+        </select>
+      </div>
+
+      <!-- 学院/专业级联 -->
+      <div class="form-row">
+        <div class="form-group">
+          <label>🎓 学院</label>
+          <select id="inputCollege" onchange="onCollegeChange()">
+            <option value="">请选择学院</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>📚 专业</label>
+          <select id="inputMajor" disabled>
+            <option value="">请先选择学院</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="btn btn-next" onclick="startQuiz()" style="margin-top:6px;">
+        开始答题 → 共 18 道人格测试
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== 答题 ===== -->
+  <div class="page" id="page-quiz">
+    <div class="quiz-header">
+      <div class="q-num" id="qNumDisplay">01</div>
+      <div class="q-text">
+        <h3 id="qTitleDisplay">题目</h3>
+        <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressBar" style="width:0%"></div></div>
+      </div>
+    </div>
+    <div class="quiz-body">
+      <div class="question-title" id="questionText"></div>
+      <div class="option-list" id="optionList"></div>
+      <div style="margin-top:clamp(16px,2.5vw,22px);display:flex;gap:10px;">
+        <button class="btn btn-retry" id="btnPrevQ" style="flex:1;display:none;" onclick="prevQuestion()">← 上一题</button>
+        <button class="btn btn-next" id="btnNextQ" disabled onclick="nextQuestion()">下一题 →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 结果 ===== -->
+  <div class="page" id="page-result">
+    <div class="result-page">
+      <div class="result-mbti" id="resultMBTI">ISTJ · 物流师</div>
+      <div class="result-trait" id="resultTrait">性格特质：严谨可靠，条理至上的规则守护者</div>
+
+      <!-- 免责提示（醒目） -->
+      <div class="disclaimer-banner">
+        ⚠️ 本测试结果仅供<strong>参考与娱乐</strong>，非专业心理评估。<br>
+        每个部门的招新标准以实际面试为准，欢迎大胆尝试所有感兴趣的部门！
+      </div>
+
+      <!-- 三张部门推荐卡片 -->
+      <div id="resultCards"></div>
+
+      <div class="result-actions">
+        <button class="btn btn-share" onclick="shareResult()">📤 分享结果</button>
+        <button class="btn btn-retry" onclick="retryTest()">🔄 重新测试</button>
+      </div>
+      <p style="font-size:11px;color:#bcc0c8;margin-top:12px;">数据已安全保存，仅供团委招新使用</p>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==================== 深圳技术大学 2025 学院/专业级联数据 ====================
+const collegeMajorMap = {
+  '中德智能制造学院': ['机器人工程','自动化','电子科学与技术','机械设计制造及其自动化','工业软件'],
+  '人工智能学院': ['人工智能','物联网工程','数据科学与大数据技术','计算机科学与技术'],
+  '新材料与新能源学院': ['光源与照明','材料科学与工程','新能源科学与工程'],
+  '城市交通与物流学院': ['无人驾驶航空器系统工程','交通运输','车辆工程','物流管理','汽车服务工程'],
+  '健康与环境工程学院': ['智能医学工程','生物医学工程'],
+  '工程物理学院': ['光电信息科学与工程','应用物理学','智能感知工程'],
+  '药学院': ['药学','口腔医学技术','中药学','生物制药'],
+  '集成电路与光电芯片学院': ['微电子科学与工程','集成电路设计与集成系统'],
+  '创意设计学院': ['环境设计','艺术与科技','工业设计'],
+  '商学院': ['财务管理','国际商务','市场营销'],
+  '外国语学院': ['德语','英语','商务英语'],
+  '音乐学院': ['音乐表演'],
+  '质量和标准学院': ['智能医学工程（医疗仪器国际标准化）','自动化（控制系统国际标准化）'],
+  '服饰技术学院': ['服装与服饰设计']
+};
+
+// ==================== 部门数据 ====================
+const departments = [
+  { id:'office', name:'办公室', emoji:'🗂️', color:'#1B3A5C', colorLight:'#3A6B8C',
+    slogan:'运筹帷幄之中，决胜千里之外。',
+    desc:'文件收发、会议组织、场地预定、物资调配——团委的「最强心脏」。严谨细致，条理清晰，一枚回形针也要摆正。' },
+  { id:'org', name:'组织部', emoji:'🏛️', color:'#2C3E50', colorLight:'#4A6B8A',
+    slogan:'构建严密逻辑，夯实组织根基。',
+    desc:'智慧团建、灯塔工程、青马工程——体系的设计者，幕后「大脑」。团籍管理、干部考核，严谨是你的代名词。' },
+  { id:'pub', name:'宣传部', emoji:'🎨', color:'#E67E22', colorLight:'#F0A04B',
+    slogan:'捕捉光影瞬间，传递青年之声。',
+    desc:'推文、海报、摄影、剪辑——创意「病毒式传播者」。脑洞无限，零基础也欢迎！笔杆子或摄像机，这里给你最大舞台。' },
+  { id:'sport', name:'文体部', emoji:'🎤', color:'#E91E63', colorLight:'#F06292',
+    slogan:'聚光灯下起舞，狂欢永不落幕。',
+    desc:'策划、控台、场控、对接——全能选手，站上舞台就发光。把枯燥的校园生活变成一场盛大的Party！' },
+  { id:'sci', name:'科创部', emoji:'🚀', color:'#C0392B', colorLight:'#E74C3C',
+    slogan:'打破思维边界，探索科技前沿。',
+    desc:'统筹「互联网+」挑战杯，从遴选到路演带团队打胜仗。无需经验只管勇敢入局，用智慧改变世界。' },
+  { id:'practice', name:'实践部', emoji:'🌍', color:'#00897B', colorLight:'#26A69A',
+    slogan:'走出象牙塔尖，实战创造真知。',
+    desc:'三下乡、百千万工程、星火留行——行动力爆表。拒绝纸上谈兵，用实力赢得资源，团委「实干家」。' },
+  { id:'second', name:'二课办', emoji:'🌱', color:'#27AE60', colorLight:'#2ECC71',
+    slogan:'守护成长足迹，记录点滴精彩。',
+    desc:'统筹第二课堂成绩单，管理「到梦空间」——见证每一次蜕变，让每份努力有回响，你的细心让大学生活有据可依。' }
+];
+
+// 16种MBTI人格 → 三级部门推荐映射（策划案核心数据表）
+const personalityMap = {
+  'ISTJ': { primary:'office', secondary:'second', tertiary:'org', name:'物流师', desc:'严谨可靠，条理至上的规则守护者' },
+  'ISFJ': { primary:'second', secondary:'office', tertiary:'org', name:'守卫者', desc:'温柔细致，默默守护每一份成长' },
+  'INFJ': { primary:'org', secondary:'second', tertiary:'pub', name:'提倡者', desc:'理想主义的灯塔，用信念感召他人' },
+  'INTJ': { primary:'org', secondary:'office', tertiary:'sci', name:'建筑师', desc:'战略大师，擅长从0到1搭建体系' },
+  'ISTP': { primary:'sci', secondary:'practice', tertiary:'second', name:'鉴赏家', desc:'动手能力MAX的冷静技术派' },
+  'ISFP': { primary:'practice', secondary:'pub', tertiary:'sport', name:'探险家', desc:'用镜头和脚步丈量世界的艺术家' },
+  'INFP': { primary:'pub', secondary:'second', tertiary:'org', name:'调停者', desc:'有温度的创作者，文字直击心灵' },
+  'INTP': { primary:'sci', secondary:'office', tertiary:'org', name:'逻辑学家', desc:'沉迷技术难题的思维探索者' },
+  'ESTP': { primary:'practice', secondary:'sci', tertiary:'sport', name:'企业家', desc:'行动力爆表的实战派冒险家' },
+  'ESFP': { primary:'sport', secondary:'pub', tertiary:'practice', name:'表演者', desc:'天生舞台焦点，气氛组扛把子' },
+  'ENFP': { primary:'pub', secondary:'sport', tertiary:'sci', name:'竞选者', desc:'创意病毒式传播的脑洞永动机' },
+  'ENTP': { primary:'sci', secondary:'pub', tertiary:'practice', name:'辩论家', desc:'跨界破局的点子王和发明家' },
+  'ESTJ': { primary:'office', secondary:'org', tertiary:'sci', name:'总经理', desc:'统筹全局的执行力天花板' },
+  'ESFJ': { primary:'office', secondary:'practice', tertiary:'sport', name:'执政官', desc:'温暖周到，把服务做出温度的管家' },
+  'ENFJ': { primary:'sport', secondary:'org', tertiary:'pub', name:'主人公', desc:'凝聚力核心，感召他人的灯塔' },
+  'ENTJ': { primary:'sci', secondary:'office', tertiary:'org', name:'指挥官', desc:'操盘顶级赛事，带团队打胜仗' }
+};
+
+// ==================== 题目配置（18题 · 场景化MBTI四维度 · 每维度A/B→一极 C/D→另一极） ====================
+const questions = [
+  // ===== E/I 维度（1-5题）=====
+  { title:'团委举办的大型迎新晚会刚结束，你已筋疲力尽，此时几个同学热情提议去聚餐续摊，你会？', dim:'EI', options:[
+    { text:'虽然累但很开心，跟大家一起去继续嗨', trait:'E' },
+    { text:'微笑着婉拒，更想回宿舍安静地躺着', trait:'I' },
+    { text:'兴致勃勃加入，路上还能活跃气氛讲笑话', trait:'E' },
+    { text:'跟着去了，但坐在角落慢慢吃自己的，不太参与聊天', trait:'I' }
+  ]},
+  { title:'课堂上老师突然点名让你即兴发表3分钟观点，你完全没有准备。此时你会？', dim:'EI', options:[
+    { text:'边站起身边快速组织语言，边讲边想', trait:'E' },
+    { text:'大脑瞬间空白，希望能再给30秒准备', trait:'I' },
+    { text:'虽然紧张但还是大方开口，用互动来争取思考时间', trait:'E' },
+    { text:'快速在纸上列了三个要点，然后照着框架冷静陈述', trait:'I' }
+  ]},
+  { title:'你在图书馆已经独自学习了整整一下午，此时你感觉？', dim:'EI', options:[
+    { text:'有点闷了，想给朋友发消息约晚饭聊聊天', trait:'E' },
+    { text:'内心很充实，这种沉浸感让我很满足', trait:'I' },
+    { text:'效率高但需要换换脑子，去茶水间逛逛看有没有熟人', trait:'E' },
+    { text:'还能再学两小时，独处的专注状态很难得', trait:'I' }
+  ]},
+  { title:'新学期第一节通识课上，老师让大家轮流做自我介绍，轮到你了，你会？', dim:'EI', options:[
+    { text:'大方站起来，声音洪亮，还能加一两句幽默引起笑声', trait:'E' },
+    { text:'简单报个名字专业，说完迅速坐下松一口气', trait:'I' },
+    { text:'用轻松的语气介绍自己的兴趣爱好，自然地和台下互动', trait:'E' },
+    { text:'提前打好腹稿，按计划说完就递给下一位，全程不超过20秒', trait:'I' }
+  ]},
+  { title:'小组群里有人提议周末团建，讨论得热火朝天，你打开群消息时的反应是？', dim:'EI', options:[
+    { text:'立刻加入讨论，连发好几条建议，越聊越兴奋', trait:'E' },
+    { text:'先潜水看完所有消息，想清楚后再发表自己的意见', trait:'I' },
+    { text:'主动张罗时间地点，恨不得今天就定下来', trait:'E' },
+    { text:'心里默默希望安排得别太折腾，安安静静聚一下就好', trait:'I' }
+  ]},
+  // ===== N/S 维度（6-9题）=====
+  { title:'团委老师让你一周内提交一份"校园文化节"初步策划方案，你最先做的会是？', dim:'NS', options:[
+    { text:'在脑海里构思一个宏大的主题概念，再以此为中心发散', trait:'N' },
+    { text:'打开去年的策划文档做参考，在此基础上修改调整', trait:'S' },
+    { text:'画一张思维导图，把各种跨界的创意灵感全列出来', trait:'N' },
+    { text:'先列出需要的物资清单、场地需求和时间推进表', trait:'S' }
+  ]},
+  { title:'和一个刚认识的朋友聊天，对方说自己是学设计的，你的第一反应是？', dim:'NS', options:[
+    { text:'好奇问TA觉得未来设计会被AI改变成什么样', trait:'N' },
+    { text:'问TA平时都用什么软件，作业多不多', trait:'S' },
+    { text:'跟TA探讨设计这个学科的本质是什么', trait:'N' },
+    { text:'问TA课表是什么样的，都上哪些专业课', trait:'S' }
+  ]},
+  { title:'你参加了一个学术讲座，主讲人大部分时间都在讲抽象的理论框架，你听完后的感受是？', dim:'NS', options:[
+    { text:'很受启发，脑子里已经开始联想这个理论能用在哪些领域', trait:'N' },
+    { text:'有点云里雾里，更希望他能多举几个具体的应用案例', trait:'S' },
+    { text:'忍不住和旁边的同学讨论这个理论背后可能的意义', trait:'N' },
+    { text:'在笔记本上记下了几个关键点，打算回去查查有没有实操教程', trait:'S' }
+  ]},
+  { title:'看了一部结局非常开放、没有给出明确答案的电影，你走出影院的反应是？', dim:'NS', options:[
+    { text:'兴奋地跟朋友讨论各种可能的结局解读，越聊越上头', trait:'N' },
+    { text:'导演到底想表达啥？下次还是看个有明确结局的吧', trait:'S' },
+    { text:'回家后搜各种影评和隐喻分析，发现好多自己没注意到的细节', trait:'N' },
+    { text:'虽然有点在意，但更关心画面美不美、配乐好不好听', trait:'S' }
+  ]},
+  // ===== T/F 维度（10-14题）=====
+  { title:'你最好的朋友参加了一个很重要的比赛，结果连初赛都没过，哭着来找你。你最先做的事是？', dim:'TF', options:[
+    { text:'帮他逐项分析哪里没做好，一起制定下次的改进计划', trait:'T' },
+    { text:'先抱着让他哭完，告诉他：在我心里你已经超厉害了', trait:'F' },
+    { text:'和他复盘比赛过程，列出具体扣分点和加分空间', trait:'T' },
+    { text:'买杯奶茶拉他去操场散步，让他知道有人在乎他就够', trait:'F' }
+  ]},
+  { title:'小组讨论中，两个同学因为方案分歧吵了起来，气氛剑拔弩张。作为组长你会？', dim:'TF', options:[
+    { text:'让双方各自列出方案优缺点，用客观标准来判断', trait:'T' },
+    { text:'先暂停讨论，带大家休息五分钟平复情绪再回来', trait:'F' },
+    { text:'指出双方争论中的逻辑漏洞，引导大家聚焦方案本身', trait:'T' },
+    { text:'注意到其中一位可能是因为自己的想法没被重视而情绪化，先安抚他', trait:'F' }
+  ]},
+  { title:'你是学院奖学金评议小组成员，两个候选人条件几乎持平，但名额只有一个。你倾向于？', dim:'TF', options:[
+    { text:'仔细对比两人的绩点和竞赛获奖等硬指标，选数据更好的', trait:'T' },
+    { text:'了解两人的家庭经济状况和实际困难，把机会给更需要的人', trait:'F' },
+    { text:'制定一个权重评分表，对各项指标量化打分，总分高者得', trait:'T' },
+    { text:'询问辅导员和同学对两人日常表现的看法，选人品口碑更好的', trait:'F' }
+  ]},
+  { title:'你花了一个月精心准备的项目，在汇报时被评委老师当场批评了方案的核心逻辑。你的内心第一反应是？', dim:'TF', options:[
+    { text:'虽然难受，但立刻冷静下来，搞清楚评委到底不满意哪个点', trait:'T' },
+    { text:'心情瞬间跌到谷底，觉得一个月的努力都被否定了', trait:'F' },
+    { text:'把批评逐条记下来，回去逐项优化，用结果证明自己', trait:'T' },
+    { text:'结束后找信任的同学倾诉，从他们那获得安慰和新的信心', trait:'F' }
+  ]},
+  { title:'你室友跟你吐槽另一个室友的习惯，已经忍了很久，越说越激动。你的回应是？', dim:'TF', options:[
+    { text:'我帮你梳理一下核心矛盾，看看有什么实际的解决方案', trait:'T' },
+    { text:'天啊这也太糟心了吧，这日子确实不好过', trait:'F' },
+    { text:'要不我帮你分析一下双方立场，看看从哪里切入沟通最有效', trait:'T' },
+    { text:'这周末要不要来我宿舍待两天换个环境散散心', trait:'F' }
+  ]},
+  // ===== J/P 维度（15-18题）=====
+  { title:'还有一个月期末考试，你面临着六门课的复习压力，你通常会？', dim:'JP', options:[
+    { text:'立刻制定一个四周复习计划，按章节和难度分配每天任务', trait:'J' },
+    { text:'知道该开始了但总想再拖两天，反正最后一两周效率最高', trait:'P' },
+    { text:'把重点科目标注出来，确保至少核心课程能复习完两轮', trait:'J' },
+    { text:'今天学这科明天换那科，看心情灵活安排，最后冲刺搞定', trait:'P' }
+  ]},
+  { title:'作为部门干事，你被安排全权负责下周的新人见面会。你的第一行动是？', dim:'JP', options:[
+    { text:'立刻拉一个清单：时间、地点、预算、嘉宾、流程、分工、应急预案', trait:'J' },
+    { text:'先在群里问问大家有什么想法和建议，然后根据反馈来安排', trait:'P' },
+    { text:'做一个详细的流程表，每个环节精确到分钟，所有材料提前三天到位', trait:'J' },
+    { text:'心里有个大概方向就行，具体细节边走边调整，相信船到桥头自然直', trait:'P' }
+  ]},
+  { title:'周末早上你自然醒来，发现今天一整天没有任何安排和任务。你的第一反应是？', dim:'JP', options:[
+    { text:'太好了，正好把之前拖着的几件事全部清掉', trait:'J' },
+    { text:'太爽了！躺到几点算几点，今天想干嘛就干嘛', trait:'P' },
+    { text:'在备忘录里列一个今日待办清单，做完一项划一项', trait:'J' },
+    { text:'先打开手机刷一圈看看有没有新鲜事，再决定今天的打开方式', trait:'P' }
+  ]},
+  { title:'你的电脑桌面和文件夹通常是怎样的状态？', dim:'JP', options:[
+    { text:'分类清晰，每个文件都在固定的文件夹里，桌面几乎没图标', trait:'J' },
+    { text:'比较随意，临时文件堆在桌面，需要时搜索一下就找到了', trait:'P' },
+    { text:'每两周整理一次归档，受不了桌面乱糟糟的感觉', trait:'J' },
+    { text:'有自己独特的命名逻辑和摆放规律，虽然别人可能完全看不懂', trait:'P' }
+  ]}
+];
+
+// ==================== 全局状态 ====================
+const API_PATH = '/api/records';
+const isRemoteAvailable = location.protocol.startsWith('http');
+let currentQuestion = 0;
+let answers = [];  // 每题的选项索引(0=A,1=B)
+let userInfo = { name:'', gender:'', college:'', major:'' };
+
+// ==================== 初始化 ====================
+document.addEventListener('DOMContentLoaded', () => {
+  createStars();
+  populateCollegeSelect();
+});
+
+// 星空
+function createStars() {
+  const c = document.getElementById('stars');
+  for (let i = 0; i < 100; i++) {
+    const s = document.createElement('div'); s.className='star';
+    s.style.left = Math.random()*100+'%';
+    s.style.top = Math.random()*100+'%';
+    const size = Math.random()*2.5+1;
+    s.style.width = size+'px'; s.style.height = size+'px';
+    s.style.setProperty('--dur', (Math.random()*3+2)+'s');
+    s.style.setProperty('--delay', Math.random()*4+'s');
+    c.appendChild(s);
+  }
+}
+
+// ==================== 级联下拉框 ====================
+function populateCollegeSelect() {
+  const sel = document.getElementById('inputCollege');
+  sel.innerHTML = '<option value="">请选择学院</option>';
+  for (const college of Object.keys(collegeMajorMap)) {
+    sel.innerHTML += `<option value="${h(college)}">${h(college)}</option>`;
+  }
+}
+
+function onCollegeChange() {
+  const college = document.getElementById('inputCollege').value;
+  const majorSel = document.getElementById('inputMajor');
+  majorSel.innerHTML = '<option value="">请选择专业</option>';
+  majorSel.disabled = !college;
+
+  if (college && collegeMajorMap[college]) {
+    for (const major of collegeMajorMap[college]) {
+      majorSel.innerHTML += `<option value="${h(major)}">${h(major)}</option>`;
+    }
+  }
+  if (!college) {
+    majorSel.innerHTML = '<option value="">请先选择学院</option>';
+  }
+}
+
+// ==================== 页面导航 ====================
+function goToPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const t = document.getElementById('page-'+name);
+  if (t) {
+    t.classList.add('active');
+    t.style.animation = 'none'; t.offsetHeight;
+    t.style.animation = 'fadeSlideIn 0.45s ease-out';
+    if (name !== 'cover') t.scrollIntoView({ behavior:'smooth', block:'center' });
+  }
+}
+
+// ==================== 表单验证 & 开始答题 ====================
+function startQuiz() {
+  const name = document.getElementById('inputName').value.trim();
+  const gender = document.getElementById('inputGender').value;
+  const college = document.getElementById('inputCollege').value;
+  const major = document.getElementById('inputMajor').value;
+
+  if (!name) { showToast('请输入姓名'); return; }
+  if (!gender) { showToast('请选择性别'); return; }
+
+  userInfo = { name, gender, college, major };
+  currentQuestion = 0; answers = new Array(questions.length).fill(null);
+  goToPage('quiz'); renderQuestion();
+}
+
+// ==================== 渲染题目 ====================
+function renderQuestion() {
+  const q = questions[currentQuestion];
+  document.getElementById('qNumDisplay').textContent = String(currentQuestion+1).padStart(2,'0');
+  document.getElementById('qTitleDisplay').textContent = `第 ${currentQuestion+1} / ${questions.length} 题`;
+  
+  // 显示维度标签
+  const dimLabels = { EI:'外向 or 内向', NS:'直觉 or 实感', TF:'思考 or 情感', JP:'判断 or 感知' };
+  document.getElementById('questionText').innerHTML = `<span style="font-size:11px;background:#f0f2ff;color:#667eea;padding:2px 10px;border-radius:10px;margin-right:8px;">${dimLabels[q.dim]}</span>${q.title}`;
+  document.getElementById('progressBar').style.width = (currentQuestion/questions.length*100)+'%';
+
+  const letters = ['A','B','C','D'];
+  document.getElementById('optionList').innerHTML = q.options.map((opt,i) => `
+    <div class="option-item" data-index="${i}" onclick="selectOption(${i})">
+      <div class="option-letter">${letters[i]}</div>
+      <div class="option-text">${opt.text}</div>
+    </div>
+  `).join('');
+
+  // 恢复已选答案
+  if (answers[currentQuestion] != null) {
+    const target = document.querySelector(`.option-item[data-index="${answers[currentQuestion]}"]`);
+    if (target) target.classList.add('selected');
+  }
+
+  const btnNext = document.getElementById('btnNextQ');
+  const btnPrev = document.getElementById('btnPrevQ');
+  btnNext.disabled = answers[currentQuestion] == null;
+  btnNext.textContent = currentQuestion === questions.length-1 ? '查看结果 🎉' : '下一题 →';
+  btnNext.style.flex = currentQuestion === 0 ? '1' : '2';
+  btnPrev.style.display = currentQuestion === 0 ? 'none' : 'block';
+}
+
+function selectOption(idx) {
+  document.querySelectorAll('.option-item').forEach(e => e.classList.remove('selected'));
+  const t = document.querySelector(`.option-item[data-index="${idx}"]`);
+  if (t) t.classList.add('selected');
+  answers[currentQuestion] = idx;
+  document.getElementById('btnNextQ').disabled = false;
+  document.getElementById('progressBar').style.width = ((currentQuestion+1)/questions.length*100)+'%';
+}
+
+function prevQuestion() {
+  if (currentQuestion > 0) {
+    currentQuestion--;
+    renderQuestion();
+    document.getElementById('page-quiz').scrollIntoView({behavior:'smooth'});
+  }
+}
+
+function nextQuestion() {
+  if (answers[currentQuestion] == null) { showToast('请先选择一个选项'); return; }
+  currentQuestion++;
+  if (currentQuestion >= questions.length) { showResult(); }
+  else { renderQuestion(); document.getElementById('page-quiz').scrollIntoView({behavior:'smooth'}); }
+}
+
+// ==================== 结果计算 ====================
+function determineMBTI() {
+  // 四维度计票
+  const dims = { E:0,I:0, N:0,S:0, T:0,F:0, J:0,P:0 };
+  for (let i = 0; i < questions.length; i++) {
+    if (answers[i] != null) {
+      const trait = questions[i].options[answers[i]].trait;
+      dims[trait] = (dims[trait]||0) + 1;
+    }
+  }
+  const EI = dims.E >= dims.I ? 'E' : 'I';
+  const NS = dims.N >= dims.S ? 'N' : 'S';
+  const TF = dims.T >= dims.F ? 'T' : 'F';
+  const JP = dims.J >= dims.P ? 'J' : 'P';
+  return EI + NS + TF + JP;
+}
+
+function showResult() {
+  const mbtiType = determineMBTI();
+  const personality = personalityMap[mbtiType];
+  // 安全回退（理论上不会触发）
+  if (!personality) {
+    showToast('结果计算异常，请重新测试'); return;
+  }
+  
+  const primary   = departments.find(d => d.id === personality.primary);
+  const secondary = departments.find(d => d.id === personality.secondary);
+  const tertiary  = departments.find(d => d.id === personality.tertiary);
+
+  // 更新人格信息
+  document.getElementById('resultMBTI').textContent = mbtiType + ' · ' + personality.name;
+  document.getElementById('resultTrait').textContent = '性格特质：' + personality.desc;
+
+  // 三张部门卡片
+  function cardHTML(level, emoji, dept, reason) {
+    return `
+      <div class="dept-card" style="border-left:4px solid ${dept.color};">
+        <div class="dept-card-level">${emoji} ${level}</div>
+        <div class="dept-card-name" style="color:${dept.color};">${dept.emoji} ${dept.name}</div>
+        <div class="dept-card-slogan">"${dept.slogan}"</div>
+        <div class="dept-card-desc">${dept.desc}</div>
+      </div>`;
+  }
+
+  document.getElementById('resultCards').innerHTML = 
+    cardHTML('首选推荐', '🥇', primary, '') +
+    cardHTML('次选推荐', '🥈', secondary, '') +
+    cardHTML('备选推荐', '🥉', tertiary, '');
+
+  document.getElementById('resultMBTI').style.color = primary.color;
+  goToPage('result');
+  saveRecord(mbtiType, personality);
+  setTimeout(createConfetti, 400);
+}
+
+// ==================== 数据存储 ====================
+function saveRecord(mbtiType, personality) {
+  const d1 = departments.find(d => d.id === personality.primary);
+  const d2 = departments.find(d => d.id === personality.secondary);
+  const d3 = departments.find(d => d.id === personality.tertiary);
+  const record = {
+    id: Date.now(),
+    name: userInfo.name, gender: userInfo.gender,
+    college: userInfo.college, major: userInfo.major,
+    answers: [...answers],
+    mbti: mbtiType + ' · ' + personality.name,
+    recommend: `🥇${d1.name} 🥈${d2.name} 🥉${d3.name}`,
+    timestamp: new Date().toLocaleString('zh-CN')
+  };
+  saveRecordLocally(record);
+  if (isRemoteAvailable) syncRecordRemote(record);
+}
+
+function saveRecordLocally(record) {
+  let records = [];
+  try { records = JSON.parse(localStorage.getItem('tuanwei_test_records')||'[]'); } catch(e){ records=[]; }
+  records.push(record);
+  localStorage.setItem('tuanwei_test_records', JSON.stringify(records));
+}
+
+async function syncRecordRemote(record) {
+  try {
+    const res = await fetch(API_PATH, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(record)
+    });
+    if (!res.ok) throw new Error('Remote save failed');
+  } catch (err) {
+    showToast('已本地保存，网络同步失败');
+  }
+}
+
+function h(s) { if(!s)return''; const d=document.createElement('div');d.textContent=s;return d.innerHTML; }
+
+// ==================== Toast ====================
+function showToast(m){
+  const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');
+  clearTimeout(t._tid);t._tid=setTimeout(()=>t.classList.remove('show'),2000);
+}
+
+// ==================== 分享 & 重测 ====================
+function shareResult() {
+  const mbti=document.getElementById('resultMBTI').textContent;
+  const cards=document.getElementById('resultCards').innerText.replace(/\n+/g,' | ');
+  const txt=`🧬 我的团委MBTI人格：${mbti}\n📋 三级部门推荐：${cards.slice(0,80)}...\n快来测测你的隐藏属性吧！`;
+  if(navigator.share){navigator.share({title:'团委MBTI人格鉴定',text:txt}).catch(()=>{});}
+  else if(navigator.clipboard){navigator.clipboard.writeText(txt).then(()=>showToast('已复制分享文案！')).catch(()=>showToast('请截图分享~'));}
+  else showToast('请长按截图分享到朋友圈~');
+}
+function retryTest() {
+  currentQuestion=0;answers=new Array(questions.length).fill(null);
+  goToPage('info');
+  document.getElementById('inputName').value='';
+  document.getElementById('inputGender').value='';
+  document.getElementById('inputCollege').value='';
+  document.getElementById('inputMajor').innerHTML='<option value="">请先选择学院</option>';
+  document.getElementById('inputMajor').disabled=true;
+}
+
+// ==================== 撒花 ====================
+function createConfetti() {
+  const colors=['#FF6B6B','#FFB347','#48CAE4','#38B000','#9B59B6','#667eea','#FF8E53'];
+  for(let i=0;i<55;i++){
+    setTimeout(()=>{
+      const c=document.createElement('div');
+      const drift=(Math.random()-0.5)*220;
+      const dur=Math.random()*2.2+2.3;
+      const del=Math.random()*0.5;
+      c.style.cssText=`
+        position:fixed;top:-20px;left:${Math.random()*100}%;
+        width:${Math.random()*8+5}px;height:${Math.random()*12+7}px;
+        background:${colors[Math.floor(Math.random()*colors.length)]};
+        border-radius:${Math.random()>0.5?'50%':'2px'};z-index:300;
+        pointer-events:none;opacity:0;
+        animation:confettiDrop ${dur}s ease-in ${del}s forwards;
+        --drift:${drift}px;--rotation:${Math.random()*720}deg;
+      `;
+      document.body.appendChild(c);
+      setTimeout(()=>c.remove(),(dur+del)*1000+300);
+    },i*18);
+  }
+}
+const cs=document.createElement('style');
+cs.textContent=`@keyframes confettiDrop{0%{top:-20px;opacity:1;transform:rotate(0deg) translateX(0);}100%{top:115vh;opacity:0;transform:rotate(var(--rotation,360deg)) translateX(var(--drift,60px));}}`;
+document.head.appendChild(cs);
+
+</script>
+</body>
+</html>
