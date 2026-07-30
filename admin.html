@@ -233,7 +233,7 @@ function showToast(m) {
 }
 
 function hashPin(pin) { return btoa(pin + '_tuanwei_salt_2025').substring(0,16); }
-function hasPinSet() { return !!localStorage.getItem('tuanwei_admin_pin'); }
+function hasPinSet() { return false; /* server-side only now */ }
 
 // ==================== PIN 逻辑 ====================
 function onPinInput(el) {
@@ -263,36 +263,36 @@ function cancelPin() {
   }
 }
 
-function setPin() {
+async function setPin() {
   const pin = readPinInput();
   const error = document.getElementById('pinError');
   if (pin.length !== 4) { error.textContent='请输入完整的 4 位密码'; error.style.display='block'; return; }
-  localStorage.setItem('tuanwei_admin_pin', hashPin(pin));
-  error.style.display='none';
-  showToast('管理密码已设置！');
-  unlockDashboard();
+  try {
+    const res = await fetch(AUTH_PATH, {
+      method: 'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ action:'set', pin })
+    });
+    const j = await res.json();
+    if (res.status === 201) { showToast('管理密码已设置（服务器端）'); unlockDashboard(); }
+    else if (j && j.error === 'already_set') { error.textContent='密码已被设置，无法再次设置'; error.style.display='block'; }
+    else { error.textContent='设置失败，请稍后重试'; error.style.display='block'; }
+  } catch (e) { error.textContent='网络异常，请检查部署'; error.style.display='block'; }
 }
 
-function verifyPin() {
+async function verifyPin() {
   const pin = readPinInput();
   const error = document.getElementById('pinError');
   if (pin.length !== 4) { error.textContent='请输入完整的 4 位密码'; error.style.display='block'; return; }
-  if (hasPinSet()) {
-    // 已有密码 → 验证
-    const stored = localStorage.getItem('tuanwei_admin_pin');
-    if (hashPin(pin) === stored) {
-      error.style.display='none';
-      unlockDashboard();
-    } else {
-      error.textContent='密码错误，请重试';
-      error.style.display='block';
-      document.querySelectorAll('.pin-digit').forEach(inp => { inp.value=''; inp.classList.remove('filled'); });
-      setTimeout(()=>{ const f=document.querySelector('.pin-digit'); if(f)f.focus(); },100);
-    }
-  } else {
-    // 首次 → 设置密码
-    setPin();
-  }
+  try {
+    const res = await fetch(AUTH_PATH, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ action:'verify', pin })
+    });
+    if (res.status === 200) { error.style.display='none'; unlockDashboard(); }
+    else if (res.status === 401) { error.textContent='密码错误，请重试'; error.style.display='block'; }
+    else if (res.status === 404) { error.textContent='尚未设置服务器密码'; error.style.display='block'; }
+    else { error.textContent='验证失败'; error.style.display='block'; }
+  } catch (e) { error.textContent='网络异常'; error.style.display='block'; }
 }
 
 function resetPin() {
@@ -315,14 +315,17 @@ function unlockDashboard() {
 }
 
 // ==================== 数据渲染 ====================
-const API_PATH = '/api/records';
+const API_PATH = '/.netlify/functions/records';
+const AUTH_PATH = '/.netlify/functions/auth';
+window.currentRecords = [];
 
 function loadDataTable() {
   fetchRemoteRecords().then(records => {
-    renderRecords(records);
+    window.currentRecords = records || [];
+    renderRecords(window.currentRecords);
   }).catch(() => {
-    const records = loadLocalRecords();
-    renderRecords(records);
+    window.currentRecords = loadLocalRecords();
+    renderRecords(window.currentRecords);
   });
 }
 
@@ -368,8 +371,7 @@ function fetchRemoteRecords() {
 
 // ==================== 数据导出 ====================
 function exportCSV() {
-  let records = loadLocalRecords();
-  try { records = JSON.parse(localStorage.getItem('tuanwei_test_records')||'[]'); } catch(e){ records = loadLocalRecords(); }
+  const records = window.currentRecords || [];
   if(!records.length){showToast('暂无数据可导出');return;}
   const letters=['A','B','C','D'];
   let csv='\uFEFF序号,姓名,性别,学院,专业,'+questions.map((_,i)=>'Q'+(i+1)).join(',')+',人格类型,三级推荐,提交时间\n';
@@ -387,7 +389,7 @@ function exportCSV() {
 }
 
 function exportJSON() {
-  let records = loadLocalRecords();
+  const records = window.currentRecords || [];
   if(!records.length){showToast('暂无数据');return;}
   const j=JSON.stringify(records,null,2);
   if(navigator.clipboard){navigator.clipboard.writeText(j).then(()=>showToast('JSON已复制到剪贴板！')).catch(()=>dlJSON(j));}
@@ -402,31 +404,49 @@ function dlJSON(s){
 
 function clearData() {
   if(!confirm('确定要清空所有测试数据吗？此操作不可恢复！'))return;
-  localStorage.removeItem('tuanwei_test_records');
   fetch(API_PATH, { method:'DELETE' }).finally(() => loadDataTable());
   showToast('数据已清空');
 }
 
 // ==================== 初始化 ====================
-(function init() {
-  if (hasPinSet()) {
-    // 已有密码 → 显示验证界面，隐藏"设置"相关UI
-    document.getElementById('pinTitle').textContent = '管理后台验证';
-    document.getElementById('pinSubtitle').textContent = '请输入 4 位管理密码';
-    document.getElementById('pinConfirmBtn').textContent = '确认';
-    document.getElementById('pinConfirmBtn').onclick = verifyPin;
-    document.getElementById('pinCancelBtn').style.display = 'block';
-    document.getElementById('pinHint').style.display = 'block';
+(async function init() {
+  // Query server to see if password is set
+  try {
+    const res = await fetch(AUTH_PATH);
+    const j = await res.json();
+    if (j && j.hasPassword) {
+      document.getElementById('pinTitle').textContent = '管理后台验证';
+      document.getElementById('pinSubtitle').textContent = '请输入 4 位管理密码';
+      document.getElementById('pinConfirmBtn').textContent = '确认';
+      document.getElementById('pinConfirmBtn').onclick = verifyPin;
+      document.getElementById('pinCancelBtn').style.display = 'block';
+      document.getElementById('pinHint').style.display = 'block';
+    } else {
+      document.getElementById('pinTitle').textContent = '首次访问 · 设置管理密码';
+      document.getElementById('pinSubtitle').textContent = '请设置 4 位数字密码以保护数据安全';
+      document.getElementById('pinConfirmBtn').textContent = '设置密码';
+      document.getElementById('pinConfirmBtn').onclick = setPin;
+      document.getElementById('pinCancelBtn').style.display = 'none';
+      document.getElementById('pinHint').style.display = 'none';
+    }
     setTimeout(()=>{ const f=document.querySelector('.pin-digit'); if(f)f.focus(); },300);
-  } else {
-    // 首次 → 设置密码
-    document.getElementById('pinTitle').textContent = '首次访问 · 设置管理密码';
-    document.getElementById('pinSubtitle').textContent = '请设置 4 位数字密码以保护数据安全';
-    document.getElementById('pinConfirmBtn').textContent = '设置密码';
-    document.getElementById('pinConfirmBtn').onclick = setPin;
-    document.getElementById('pinCancelBtn').style.display = 'none';
-    document.getElementById('pinHint').style.display = 'none';
-    setTimeout(()=>{ const f=document.querySelector('.pin-digit'); if(f)f.focus(); },300);
+  } catch (e) {
+    // Network fail: keep original local fallback behavior
+    if (hasPinSet()) {
+      document.getElementById('pinTitle').textContent = '管理后台验证';
+      document.getElementById('pinSubtitle').textContent = '请输入 4 位管理密码';
+      document.getElementById('pinConfirmBtn').textContent = '确认';
+      document.getElementById('pinConfirmBtn').onclick = verifyPin;
+      document.getElementById('pinCancelBtn').style.display = 'block';
+      document.getElementById('pinHint').style.display = 'block';
+    } else {
+      document.getElementById('pinTitle').textContent = '首次访问 · 设置管理密码';
+      document.getElementById('pinSubtitle').textContent = '请设置 4 位数字密码以保护数据安全';
+      document.getElementById('pinConfirmBtn').textContent = '设置密码';
+      document.getElementById('pinConfirmBtn').onclick = setPin;
+      document.getElementById('pinCancelBtn').style.display = 'none';
+      document.getElementById('pinHint').style.display = 'none';
+    }
   }
 
   // 回车键提交
