@@ -359,11 +359,6 @@
     transition:all var(--transition);
   }
   .dept-card:hover { background:#f0f2ff; transform:translateX(4px); }
-  .dept-card-level {
-    font-size:clamp(12px,1.8vw,13px);
-    font-weight:700; color:var(--text-light);
-    margin-bottom:4px;
-  }
   .dept-card-name {
     font-size:clamp(16px,2.5vw,20px);
     font-weight:800; margin-bottom:4px;
@@ -803,9 +798,7 @@ function renderQuestion() {
   document.getElementById('qNumDisplay').textContent = String(currentQuestion+1).padStart(2,'0');
   document.getElementById('qTitleDisplay').textContent = `第 ${currentQuestion+1} / ${questions.length} 题`;
   
-  // 显示维度标签
-  const dimLabels = { EI:'外向 or 内向', NS:'直觉 or 实感', TF:'思考 or 情感', JP:'判断 or 感知' };
-  document.getElementById('questionText').innerHTML = `<span style="font-size:11px;background:#f0f2ff;color:#667eea;padding:2px 10px;border-radius:10px;margin-right:8px;">${dimLabels[q.dim]}</span>${q.title}`;
+  document.getElementById('questionText').textContent = q.title;
   document.getElementById('progressBar').style.width = (currentQuestion/questions.length*100)+'%';
 
   const letters = ['A','B','C','D'];
@@ -887,21 +880,15 @@ function showResult() {
   document.getElementById('resultMBTI').textContent = mbtiType + ' · ' + personality.name;
   document.getElementById('resultTrait').textContent = '性格特质：' + personality.desc;
 
-  // 三张部门卡片
-  function cardHTML(level, emoji, dept, reason) {
-    return `
-      <div class="dept-card" style="border-left:4px solid ${dept.color};">
-        <div class="dept-card-level">${emoji} ${level}</div>
-        <div class="dept-card-name" style="color:${dept.color};">${dept.emoji} ${dept.name}</div>
-        <div class="dept-card-slogan">"${dept.slogan}"</div>
-        <div class="dept-card-desc">${dept.desc}</div>
-      </div>`;
-  }
-
-  document.getElementById('resultCards').innerHTML = 
-    cardHTML('首选推荐', '🥇', primary, '') +
-    cardHTML('次选推荐', '🥈', secondary, '') +
-    cardHTML('备选推荐', '🥉', tertiary, '');
+  // 三张部门卡片（平级展示，无排序）
+  const deptList = [primary, secondary, tertiary];
+  document.getElementById('resultCards').innerHTML = deptList.map(dept => `
+    <div class="dept-card" style="border-left:4px solid ${dept.color};">
+      <div class="dept-card-name" style="color:${dept.color};">${dept.emoji} ${dept.name}</div>
+      <div class="dept-card-slogan">"${dept.slogan}"</div>
+      <div class="dept-card-desc">${dept.desc}</div>
+    </div>
+  `).join('');
 
   document.getElementById('resultMBTI').style.color = primary.color;
   goToPage('result');
